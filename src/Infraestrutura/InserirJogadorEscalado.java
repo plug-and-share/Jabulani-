@@ -38,7 +38,7 @@ public class InserirJogadorEscalado {
 
 	}
 
-	private static void insertRecordIntoTable( int partida, int jogador, int pais, int posicao, int numero, boolean titular, int status, int tempo_jogo, int passes_completos, int  int passes_tentados, int  precisao_passes, int  passes_recebidos, int  gols_marcados, int  gols_sofridos, int  penaltis_convertidos, int  penaltis_perdidos, int  chutes, int  chutes_gol, int  assistencias, int  impedimentos, int  defesas, int  advertencias, int  expulsoes_indiretas, int  expulsoes_diretas, int  faltas_cometidas, int  faltas_sofridas, int distancia_percorrida, int  velocidade_maxima, int  arrancadas) throws SQLException {
+	private static void insertRecordIntoTable( int partida, int jogador, int pais, int posicao, int numero, boolean titular, int status, int tempo_jogo, int passes_completos, int passes_tentados, int  precisao_passes, int  passes_recebidos, int  gols_marcados, int  gols_sofridos, int  penaltis_convertidos, int  penaltis_perdidos, int  chutes, int  chutes_gol, int  assistencias, int  impedimentos, int  defesas, int  advertencias, int  expulsoes_indiretas, int  expulsoes_diretas, int  faltas_cometidas, int  faltas_sofridas, int distancia_percorrida, int  velocidade_maxima, int  arrancadas) throws SQLException {
 
 		Connection dbConnection = null;
 		PreparedStatement prepState = null;
