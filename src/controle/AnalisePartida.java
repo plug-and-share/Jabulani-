@@ -111,21 +111,29 @@ public class AnalisePartida implements Runnable
         substituicoes.add(s1);
     }
 
-    public int analisarJogadores(Elements elementos, ArrayList<JogadorPartida> jogadores, ArrayList<Substituicao> substituicoes, boolean titular)
+    public int analisarJogadores(Elements elementos, ArrayList<Jogador> jogadores, ArrayList<Substituicao> substituicoes, String pais, boolean titular)
     {
         int capitao=0;
         for(Element elemento: elementos)
         {
-            JogadorPartida jogador=new JogadorPartida();
+            Jogador jogador=new Jogador();
             Elements elementos2=elemento.getElementsByClass("p-i-no");
             if(elementos2.isEmpty())
                 continue;
-            jogador.jogador=Integer.parseInt(elementos2.get(0).attr("data-player-id"));
+            jogador.id=Integer.parseInt(elementos2.get(0).attr("data-player-id"));
             jogador.numero=Short.parseShort(elementos2.get(0).getElementsByClass("p-i-bibnum").text());
             jogador.titular=titular;
+            String texto=elementos2.get(0).attr("data-player-role").trim();
+            if(!texto.equals(""))
+                jogador.posicao=texto.charAt(0);
+            else
+            {
+                ArrayList<Jogador> selecao=copa.selecoes.get(pais).jogadores;
+                jogador.posicao=selecao.get(Collections.binarySearch(selecao, jogador)).posicao;
+            }
             elementos2=elemento.getElementsByClass("p-k");
             if(elementos2.size()>0&&elementos2.get(0).text().contains("(C)"))
-                capitao=jogador.jogador;
+                capitao=jogador.id;
             elementos2=elemento.getElementsByTag("img");
             jogador.status=elementos2.size()>0 ? elementos2.get(0).attr("title") : "";
             status.add(jogador.status);
@@ -134,12 +142,12 @@ public class AnalisePartida implements Runnable
             analisarCartoes(elemento.getElementsByClass("red-card"), jogador.cartoes, true);
             elementos2=elemento.getElementsByClass("substitution-out");
             if(!elementos2.isEmpty())
-                analisarSubstituido(elementos2.get(0), substituicoes, jogador.jogador);
+                analisarSubstituido(elementos2.get(0), substituicoes, jogador.id);
             if(!titular)
             {
                 elementos2=elemento.getElementsByClass("substitution-in");
                 if(!elementos2.isEmpty())
-                    analisarSubstituto(elementos2.get(0), substituicoes, jogador.jogador);
+                    analisarSubstituto(elementos2.get(0), substituicoes, jogador.id);
             }
             jogadores.add(jogador);
         }
@@ -201,6 +209,9 @@ public class AnalisePartida implements Runnable
         texto=body.getElementsByClass("match-name-result").get(0).getElementsByClass("result").get(0).text();
         partida.prorrogacao=texto.contains("a.e.t.");
         partida.disputaPenaltis=texto.contains("PSO");
+        partida.golOuro=body.getElementsByClass("text-reasonwin").get(1).text().contains("Golden Goal");
+        if(!partida.prorrogacao&&partida.disputaPenaltis)
+            System.out.println(link);
         if(partida.disputaPenaltis)
         {
             i=texto.lastIndexOf(':');
@@ -229,12 +240,6 @@ public class AnalisePartida implements Runnable
             partida.arbitro4=new Pessoa();
             analisarArbitro(elementos.get(3), partida.arbitro4);
         }
-        elemento=body.getElementsByClass("fielded").get(0);
-        partida.capitao1=analisarJogadores(elemento.getElementsByClass("home"), partida.jogadores1, partida.substituicoes1, true);
-        partida.capitao2=analisarJogadores(elemento.getElementsByClass("away"), partida.jogadores2, partida.substituicoes2, true);
-        elemento=body.getElementsByClass("substitutes").get(0);
-        analisarJogadores(elemento.getElementsByClass("home"), partida.jogadores1, partida.substituicoes1, false);
-        analisarJogadores(elemento.getElementsByClass("away"), partida.jogadores2, partida.substituicoes2, false);
         elementos=body.getElementsByClass("match-people");
         if(elementos.size()!=2)
             System.out.println(link);
@@ -250,8 +255,18 @@ public class AnalisePartida implements Runnable
 
     public void baixarRelatorio() throws IOException
     {
-        Element body=Main.obterPagina(link.replace("index", "report"));
+        Element body=Main.obterPagina(link.replace("index", "report"), true);
         analisarRelatorio(body);
+    }
+
+    public void analisarEscalacao(Element body)
+    {
+        Element elemento=body.getElementsByClass("fielded").get(0);
+        partida.capitao1=analisarJogadores(elemento.getElementsByClass("home"), partida.jogadores1, partida.substituicoes1, partida.selecao1, true);
+        partida.capitao2=analisarJogadores(elemento.getElementsByClass("away"), partida.jogadores2, partida.substituicoes2, partida.selecao2, true);
+        elemento=body.getElementsByClass("substitutes").get(0);
+        analisarJogadores(elemento.getElementsByClass("home"), partida.jogadores1, partida.substituicoes1, partida.selecao1, false);
+        analisarJogadores(elemento.getElementsByClass("away"), partida.jogadores2, partida.substituicoes2, partida.selecao2, false);
     }
 
     public void analisarResumo(Element body)
@@ -319,7 +334,7 @@ public class AnalisePartida implements Runnable
         Element body=null;
         try
         {
-            body=Main.obterPagina(link);
+            body=Main.obterPagina(link, true);
         }
         catch(IOException ex)
         {
@@ -338,10 +353,12 @@ public class AnalisePartida implements Runnable
                 Logger.getLogger(AnalisePartida.class.getName()).log(Level.SEVERE, null, ex);
             }
             analisarResumo(body);
+            analisarEscalacao(body);
         }
         else
         {
             analisarRelatorio(body);
+            analisarEscalacao(body);
             partida.mvp=0;
             partida.tempo=null;
             partida.temperatura=Byte.MIN_VALUE;

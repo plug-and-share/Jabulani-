@@ -4,6 +4,6 @@ import java.util.*;
 
 public class Selecao
 {
-    public String pais;
-    public ArrayList<JogadorCopa> jogadores=new ArrayList();
+    public String confederacao;
+    public ArrayList<Jogador> jogadores=new ArrayList();
 }

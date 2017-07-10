@@ -22,7 +22,7 @@ public class AnalisePessoa implements Runnable
     {
         try
         {
-            pessoa.pais=Main.obterPagina(link).getElementsByClass("t-nTri").get(0).text().trim();
+            pessoa.pais=Main.obterPagina(link, true).getElementsByClass("t-nTri").get(0).text().trim();
         }
         catch(HttpStatusException|NoSuchFileException ex)
         {

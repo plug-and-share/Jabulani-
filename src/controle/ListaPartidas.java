@@ -25,7 +25,7 @@ public class ListaPartidas implements Runnable
         Elements elementos=null;
         try
         {
-            elementos=Main.obterPagina(link).getElementsByClass("mu-m-link");
+            elementos=Main.obterPagina(link, true).getElementsByClass("mu-m-link");
         }
         catch(IOException ex)
         {

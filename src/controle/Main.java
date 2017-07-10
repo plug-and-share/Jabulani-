@@ -5,13 +5,15 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.*;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
 
 public class Main
 {
-    public static ArrayList<Copa> copas=new ArrayList();
+    public static SortedMap<Short, Copa> copas=Collections.synchronizedSortedMap(new TreeMap());
+    public static SortedMap<String, Confederacao> confederacoes=Collections.synchronizedSortedMap(new TreeMap());
     public static List<Estadio> estadios=Collections.synchronizedList(new ArrayList());
     public static SortedSet<Pais> paises=Collections.synchronizedSortedSet(new TreeSet());
     public static SortedSet<Pessoa> arbitros=Collections.synchronizedSortedSet(new TreeSet());
@@ -19,15 +21,16 @@ public class Main
     public static SortedSet<String> fases=Collections.synchronizedSortedSet(new TreeSet());
     public static SortedSet<String> status=Collections.synchronizedSortedSet(new TreeSet());
     public static SortedSet<String> tempo=Collections.synchronizedSortedSet(new TreeSet());
+    public static SortedSet<String> premios=Collections.synchronizedSortedSet(new TreeSet());
+    public static ArrayList<String> trofeus=new ArrayList();
     public static SortedSet<Character> posicoes=Collections.synchronizedSortedSet(new TreeSet());
-    public static final String PAGINA_INICIAL="http://www.fifa.com";
-    public static final String PASTA_INICIAL="D:\\Trabalhos escolares\\2017\\Banco de Dados\\FIFA";
+    public static final String PASTA="D:/Trabalhos escolares/2017/Banco de Dados/Copa do Mundo/Dados/";
     public static boolean cache=true;
 
     public static void listarCopas(String link) throws IOException, InterruptedException
     {
         int indice;
-        Elements elementos=obterPagina(link).getElementsByClass("slider-complink");
+        Elements elementos=obterPagina(link, true).getElementsByClass("slider-complink");
         ExecutorService es=Executors.newFixedThreadPool(10);
         for(Element elemento: elementos)
         {
@@ -35,51 +38,170 @@ public class Main
             String ano=elemento.text();
             ano=ano.substring(ano.lastIndexOf(' ')+1).trim();
             copa.ano=Short.parseShort(ano);
+            copas.put(copa.ano, copa);
             if(copa.ano>2017)
-                break;
-            copas.add(copa);
+                continue;
             String linkCopa=elemento.attr("href");
             copa.link=linkCopa.substring(0, linkCopa.lastIndexOf('/'));
             es.execute(new ListaSelecoes(copa.link+"/teams/index.html", copa));
-            es.execute(new ListaPartidas(copa.link+"/matches/index.html", copa));
+            es.execute(new AnalisePremios(copa.link+"/awards/index.html", copa));
         }
         es.shutdown();
         es.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-        es=Executors.newFixedThreadPool(100);
+        es=Executors.newFixedThreadPool(1);
+        for(Map.Entry<Short, Copa> copa: copas.entrySet())
+            if(copa.getValue().ano<=2017)
+                es.execute(new ListaPartidas(copa.getValue().link+"/matches/index.html", copa.getValue()));
+        es.shutdown();
+        es.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+        es=Executors.newFixedThreadPool(500);
         for(Pessoa jogador: jogadores)
             es.execute(new AnalisePessoa("/fifa-tournaments/players-coaches/people="+jogador.id+"/library/_people_detail.htmx", jogador));
         es.shutdown();
         es.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
     }
 
-    public static Element obterPagina(String link) throws IOException
+    public static void analisarConfederacoes(String link) throws IOException
     {
-        Path arquivo=Paths.get(PASTA_INICIAL+link);
+        Elements elementos=obterPagina(link, false).getElementsByClass("wikitable").get(0).getElementsByTag("tr");
+        for(int i=2; i<elementos.size(); i++)
+        {
+            Elements elementos2=elementos.get(i).getElementsByTag("th");
+            if(elementos2.isEmpty())
+                continue;
+            Confederacao confederacao=confederacoes.get(elementos2.get(0).text().split(",")[0].trim());
+            elementos2=elementos.get(i).getElementsByTag("td");
+            confederacao.nome=elementos2.get(0).getElementsByTag("a").get(0).text().trim();
+            confederacao.acronimo=elementos2.get(1).text().trim();
+        }
+    }
+
+    public static void analisarSimbolos(String link) throws IOException
+    {
+        Element body=Main.obterPagina(link, false);
+        Elements elementos=body.getElementsByClass("wikitable").get(0).getElementsByTag("tr");
+        for(int i=1; i<elementos.size(); i++)
+        {
+            Elements elementos2=elementos.get(i).getElementsByTag("td");
+            String texto=elementos2.get(0).getElementsByTag("a").get(0).text().trim();
+            Copa copa=copas.get(Short.parseShort(texto.substring(texto.length()-4)));
+            if(copa==null)
+                continue;
+            elementos2=elementos2.get(1).getElementsByTag("b");
+            for(Element elemento: elementos2)
+                copa.mascotes.add(elemento.text().trim());
+        }
+        elementos=body.getElementsByClass("nowraplinks").get(1).getElementsByTag("tr");
+        Elements elementos2=elementos.get(1).getElementsByTag("li");
+        for(Element elemento: elementos2)
+        {
+            Copa copa=copas.get(Short.parseShort(elemento.getElementsByTag("a").get(0).text().trim()));
+            String texto=elemento.text();
+            copa.musica=texto.substring(texto.indexOf('"')+1, texto.lastIndexOf('"')).trim();
+        }
+        elementos2=elementos.get(5).getElementsByTag("li");
+        for(Element elemento: elementos2)
+        {
+            Copa copa=copas.get(Short.parseShort(elemento.getElementsByTag("a").get(0).text().trim()));
+            copa.album=elemento.getElementsByTag("i").get(0).text().trim();
+        }
+        elementos2=elementos.get(6).getElementsByTag("li");
+        for(Element elemento: elementos2)
+        {
+            Copa copa=copas.get(Short.parseShort(elemento.getElementsByTag("a").get(0).text().trim()));
+            copa.instrumento=elemento.getElementsByTag("a").get(2).text().trim();
+        }
+    }
+
+    public static void analisarTrofeus(String link) throws IOException
+    {
+        Element elemento=obterPagina(link, false).getElementsByTag("h2").get(3);
+        while(true)
+        {
+            elemento=elemento.nextElementSibling();
+            if(!elemento.tagName().equals("p"))
+                break;
+            String trofeu=elemento.getElementsByTag("b").get(0).text().trim();
+            elemento=elemento.nextElementSibling();
+            Elements elementos=elemento.getElementsByTag("li");
+            for(Element elemento2: elementos)
+            {
+                Matcher m=Pattern.compile("\\d+").matcher(elemento2.ownText());
+                while(m.find())
+                    copas.get(Short.parseShort(m.group())).trofeu=trofeu;
+            }
+            trofeus.add(trofeu);
+        }
+    }
+
+    public static void analisarBolas(String link) throws IOException
+    {
+        int linhas=0;
+        Elements elementos=obterPagina(link, false).getElementsByClass("wikitable").get(0).getElementsByTag("tr");
+        for(int i=1; i<elementos.size(); i++)
+        {
+            if(linhas>0)
+            {
+                linhas--;
+                continue;
+            }
+            Elements elementos2=elementos.get(i).getElementsByTag("td");
+            Element elemento2=elementos2.get(0);
+            String texto=elemento2.attr("rowspan");
+            linhas=texto.isEmpty() ? 0 : Integer.parseInt(texto)-1;
+            texto=elemento2.getElementsByTag("a").get(0).text().trim();
+            if(!texto.matches("\\d+"))
+                continue;
+            String[] textos=elementos2.get(1).text().split("\\([^)]*\\)");
+            Copa copa=copas.get(Short.parseShort(texto));
+            for(String bola: textos)
+                copa.bolas.add(bola.trim());
+        }
+    }
+
+    public static Element obterPagina(String link, boolean fifa) throws IOException
+    {
+        String siteFifa="http://www.fifa.com", siteWikipedia="http://en.wikipedia.org";
+        Path arquivo=Paths.get(PASTA+(fifa ? "FIFA" : "Wikipedia")+link);
         if(!cache)
         {
-            String pagina=Jsoup.connect(PAGINA_INICIAL+link).get().html();
+            String pagina=Jsoup.connect((fifa ? siteFifa : siteWikipedia)+link).get().html();
             Files.createDirectories(arquivo.getParent());
             Files.write(arquivo, pagina.getBytes());
         }
-        return Jsoup.parse(Files.newInputStream(arquivo), null, PAGINA_INICIAL+link).body();
+        return Jsoup.parse(Files.newInputStream(arquivo), null, (fifa ? siteFifa : siteWikipedia)+link).body();
     }
 
     public static void main(String[] args) throws IOException, InterruptedException
     {
         listarCopas("/worldcup/index.html");
-        for(Copa copa: copas)
+        analisarConfederacoes("/wiki/Geography_of_association_football");
+        analisarSimbolos("/wiki/FIFA_World_Cup_mascot");
+        analisarTrofeus("/wiki/FIFA_World_Cup_Trophy");
+        analisarBolas("/wiki/Ball_(association_football)");
+        for(Map.Entry<Short, Copa> copa: copas.entrySet())
         {
-            System.out.println(copa.ano);
+            System.out.println(copa.getValue().ano);
+            System.out.println("");
+            System.out.println(copa.getValue().musica);
+            System.out.println(copa.getValue().album);
+            System.out.println(copa.getValue().instrumento);
+            System.out.println("\nMascotes:\n");
+            for(String mascote: copa.getValue().mascotes)
+                System.out.println(mascote);
+            System.out.println("\nBolas:\n");
+            for(String bola: copa.getValue().bolas)
+                System.out.println(bola);
             System.out.println("\nSeleções:\n");
-            for(Selecao selecao: copa.selecoes)
+            for(Map.Entry<String, Selecao> selecao: copa.getValue().selecoes.entrySet())
             {
-                System.out.println(selecao.pais);
+                System.out.printf("%s (%s)\n", selecao.getKey(), selecao.getValue().confederacao);
                 System.out.println("");
-                for(JogadorCopa jogadorCopa: selecao.jogadores)
-                    System.out.printf("%d : %d (%c)\n", jogadorCopa.numero, jogadorCopa.jogador, jogadorCopa.posicao);
+                for(Jogador jogador: selecao.getValue().jogadores)
+                    System.out.printf("%d : %d (%c)\n", jogador.numero, jogador.id, jogador.posicao);
                 System.out.println("");
             }
-            for(Partida partida: copa.partidas)
+            for(Partida partida: copa.getValue().partidas)
             {
                 System.out.printf("Partida: %d\n\n", partida.id);
                 System.out.printf("%s : %s : %s\n", partida.estadio.pais, partida.estadio.cidade, partida.estadio.nome);
@@ -101,18 +223,24 @@ public class Main
                 System.out.printf("Técnico 2: %s : %s\n", partida.tecnico2.nome, partida.tecnico2.pais);
                 if(partida.prorrogacao)
                     System.out.println("Prorrogação");
+                if(partida.golOuro)
+                    System.out.println("Gol de ouro");
                 System.out.println(partida.tempo);
                 System.out.println(partida.temperatura);
                 System.out.println(partida.vento);
                 System.out.println(partida.umidade);
                 System.out.println("\nJogadores 1:\n");
-                for(JogadorPartida jogadorPartida: partida.jogadores1)
-                    System.out.printf("%d : %s : %s %s\n", jogadorPartida.numero, jogadorPartida.jogador, jogadorPartida.titular ? "titular" : "reserva", jogadorPartida.status);
-                System.out.println("\nJogadores 2:\n");
-                for(JogadorPartida jogadorPartida: partida.jogadores1)
+                for(Jogador jogador: partida.jogadores1)
                 {
-                    System.out.printf("%d : %s : %s %s\n", jogadorPartida.numero, jogadorPartida.jogador, jogadorPartida.titular ? "titular" : "reserva", jogadorPartida.status);
-                    for(Cartao cartao: jogadorPartida.cartoes)
+                    System.out.printf("%d : %s (%c) %s %s\n", jogador.numero, jogador.id, jogador.posicao, jogador.titular ? "titular" : "reserva", jogador.status);
+                    for(Cartao cartao: jogador.cartoes)
+                        System.out.printf("    %s - %s : %s\n", cartao.vermelho ? "vermelho" : "amarelo", cartao.minuto, cartao.acrescimo);
+                }
+                System.out.println("\nJogadores 2:\n");
+                for(Jogador jogador: partida.jogadores2)
+                {
+                    System.out.printf("%d : %s (%c) %s %s\n", jogador.numero, jogador.id, jogador.posicao, jogador.titular ? "titular" : "reserva", jogador.status);
+                    for(Cartao cartao: jogador.cartoes)
                         System.out.printf("    %s - %s : %s\n", cartao.vermelho ? "vermelho" : "amarelo", cartao.minuto, cartao.acrescimo);
                 }
                 System.out.println("\nGols 1:\n");
@@ -134,9 +262,21 @@ public class Main
                 System.out.println("\nSubstituições 1:\n");
                 for(Substituicao substituicao: partida.substituicoes1)
                     System.out.printf("%s - %d : %d - %d : %d %s\n", substituicao.id, substituicao.substituido, substituicao.substituto, substituicao.minuto, substituicao.acrescimo, substituicao.intervalo ? "Intervalo" : "");
+                System.out.println("\nSubstituições 2:\n");
+                for(Substituicao substituicao: partida.substituicoes2)
+                    System.out.printf("%s - %d : %d - %d : %d %s\n", substituicao.id, substituicao.substituido, substituicao.substituto, substituicao.minuto, substituicao.acrescimo, substituicao.intervalo ? "Intervalo" : "");
                 System.out.println("");
             }
+            System.out.println("\nJogadores premiados:\n");
+            for(JogadorPremiado jogador: copa.getValue().jogadoresPremiados)
+                System.out.printf("%d - %s - %s : %s\n", jogador.jogador.id, jogador.jogador.nome, jogador.jogador.pais, jogador.premio);
+            System.out.println("\nSeleções premiadas:\n");
+            for(SelecaoPremiada selecao: copa.getValue().selecoesPremiadas)
+                System.out.printf("%s : %s\n", selecao.selecao, selecao.premio);
+            System.out.println("");
         }
+        for(Map.Entry<String, Confederacao> confederacao: confederacoes.entrySet())
+            System.out.printf("%s : %s : %s\n", confederacao.getKey(), confederacao.getValue().acronimo, confederacao.getValue().nome);
         for(Estadio estadio: estadios)
             System.out.printf("%s : %s : %s : %d : %d\n", estadio.pais, estadio.cidade, estadio.nome, estadio.anoConstrucao, estadio.capacidade);
         for(Pais pais: paises)

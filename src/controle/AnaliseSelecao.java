@@ -6,6 +6,7 @@ import entidades.*;
 import java.io.*;
 import java.time.*;
 import java.time.format.*;
+import java.util.*;
 import java.util.logging.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
@@ -27,7 +28,7 @@ public class AnaliseSelecao implements Runnable
         Element body=null;
         try
         {
-            body=Main.obterPagina(link);
+            body=Main.obterPagina(link, true);
         }
         catch(IOException ex)
         {
@@ -39,7 +40,7 @@ public class AnaliseSelecao implements Runnable
         for(Element elemento: elementos)
         {
             Pessoa pessoa=new Pessoa();
-            JogadorCopa jogadorCopa=new JogadorCopa();
+            Jogador jogador=new Jogador();
             String texto=elemento.attr("data-player-id").trim();
             pessoa.id=Integer.parseInt(texto);
             pessoa.nome=elemento.attr("data-player-name").trim();
@@ -51,25 +52,26 @@ public class AnaliseSelecao implements Runnable
             {
             }
             jogadores.add(pessoa);
-            jogadorCopa.jogador=pessoa.id;
+            jogador.id=pessoa.id;
             try
             {
-                jogadorCopa.posicao=elemento.attr("data-player-role").trim().charAt(0);
-                posicoes.add(jogadorCopa.posicao);
+                jogador.posicao=elemento.attr("data-player-role").trim().charAt(0);
+                posicoes.add(jogador.posicao);
             }
             catch(StringIndexOutOfBoundsException e)
             {
-                jogadorCopa.posicao=0;
+                jogador.posicao=0;
             }
             try
             {
-                jogadorCopa.numero=Short.parseShort(elemento.getElementsByClass("p-i-bibnum").get(0).text());
+                jogador.numero=Short.parseShort(elemento.getElementsByClass("p-i-bibnum").get(0).text());
             }
             catch(NumberFormatException e)
             {
-                jogadorCopa.numero=0;
+                jogador.numero=0;
             }
-            selecao.jogadores.add(jogadorCopa);
+            selecao.jogadores.add(jogador);
         }
+        Collections.sort(selecao.jogadores);
     }
 }
