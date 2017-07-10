@@ -32,7 +32,7 @@ public class InserirPartida {
     public InserirPartida() {
 
         try {
-            insertRecordIntoTable(copa, fase, grupo, sequencia, pais1, pais2, hora, estadio, publico, bola, acrescimo1, acrescimo2 , acrescimo3, acrescimo4, tecnico1, tecnico2, tecnico3, tecnico4, mvp, arbitro, assistente1, assistente2, arbitro4, comissario_partida, coordenador_geral, gols1, gols2, disputa_penaltis1, disputa_penaltis2, posse1, posse2, tempo_posse1, tempo_posse2, chutes1, chutes2, chutes_gol1, chutes_gol2, faltas_cometidas1, faltas_cometidas2, faltas_sofridas1, faltas_sofrida2, escanteios1, escanteios2, tiros_diretos1, tiros_diretos2, tiros_indiretos1, tiros_indiretos2, penaltis_cobrados1, penaltis_cobrados2, penaltis_convertidos1, penaltis_convertidos2, impedimentos1, impedimentos2, gols_contra1, gols_contra2, advertencias1, advertencias2, expulsoes_indiretas1, expulsoes_indiretas2, expulsoes_diretas1, expulsoes_diretas2, tempo, temperatura, vento, umidade, prorrogacao, disputa_penalti);
+            insertRecordIntoTable(copa, fase, grupo, sequencia, pais1, pais2, hora, estadio, publico, bola, acrescimo1, acrescimo2 , acrescimo3, acrescimo4, tecnico1, tecnico2, tecnico3, tecnico4, mvp, arbitro, assistente1, assistente2, arbitro4, comissario_partida, coordenador_geral, gols1, gols2, disputa_penaltis1, disputa_penaltis2, posse1, posse2, tempo_posse1, tempo_posse2, chutes1, chutes2, chutes_gol1, chutes_gol2, faltas_cometidas1, faltas_cometidas2, faltas_sofridas1, faltas_sofridas2, escanteios1, escanteios2, tiros_diretos1, tiros_diretos2, tiros_indiretos1, tiros_indiretos2, penaltis_cobrados1, penaltis_cobrados2, penaltis_convertidos1, penaltis_convertidos2, impedimentos1, impedimentos2, gols_contra1, gols_contra2, advertencias1, advertencias2, expulsoes_indiretas1, expulsoes_indiretas2, expulsoes_diretas1, expulsoes_diretas2, tempo, temperatura, vento, umidade, prorrogacao, disputa_penalti);
 
         } catch (SQLException e) {
 
@@ -62,7 +62,7 @@ public class InserirPartida {
 
             prepState.setInt(1, copa);
             prepState.setInt(2, fase);
-            prepState.setChar(3, grupo);
+            prepState.setString(3, String.valueOf(grupo));
             prepState.setInt(4, sequencia);
             prepState.setInt(5, pais1 );
             prepState.setInt(6, pais2);
@@ -79,47 +79,46 @@ public class InserirPartida {
             prepState.setInt(17, tecnico3);
             prepState.setInt(18, tecnico4);
             prepState.setInt(19, mvp);
-            prepState.setInt(20, disputa_penalti);
-            prepState.setInt(21, disputa_penaltis1);
-            prepState.setInt(22, disputa_penaltis2);
-            prepState.setInt(23, posse1);
-            prepState.setInt(24, posse2);
-            prepState.setInt(25, tempo_posse1);
-            prepState.setInt(26, tempo_posse2);
-            prepState.setInt(27, chutes1);
-            prepState.setInt(28, chutes2);
-            prepState.setInt(29, chutes_gol1);
-            prepState.setInt(30, chutes_gol2);
-            prepState.setInt(31, faltas_cometidas1);
-            prepState.setInt(32, faltas_cometidas2);
-            prepState.setInt(33, faltas_sofridas1);
-            prepState.setInt(34, faltas_sofridas2);
-            prepState.setInt(35, escanteios1);
-            prepState.setInt(36, escanteios2);
-            prepState.setInt(37, tiros_diretos1);
-            prepState.setInt(38, tiros_diretos2);
-            prepState.setInt(39, tiros_indiretos1);
-            prepState.setInt(40, tiros_indiretos2);
-            prepState.setInt(41, penaltis_cobrados1);
-            prepState.setInt(42, penaltis_cobrados2);
-            prepState.setInt(43, penaltis_convertidos1);
-            prepState.setInt(44, penaltis_convertidos2);
-            prepState.setInt(45, impedimentos1);
-            prepState.setInt(46, impedimentos2);
-            prepState.setInt(47, gols_contra1);
-            prepState.setInt(48, gols_contra2);
-            prepState.setInt(49, advertencias1);
-            prepState.setInt(50, advertencias2);
-            prepState.setInt(51, expulsoes_indiretas1);
-            prepState.setInt(52, expulsoes_indiretas2);
-            prepState.setInt(53, expulsoes_diretas1);
-            prepState.setInt(54, expulsoes_diretas2);
-            prepState.setInt(55, tempo);
-            prepState.setInt(56, temperatura);
-            prepState.setInt(57, vento);
-            prepState.setInt(58, umidade);
-            prepState.setBoolean(59, prorrogacao);
-            prepState.setBoolean(60, disputa_penalti);
+            prepState.setInt(20, disputa_penaltis1);
+            prepState.setInt(21, disputa_penaltis2);
+            prepState.setInt(22, posse1);
+            prepState.setInt(23, posse2);
+            prepState.setInt(24, tempo_posse1);
+            prepState.setInt(25, tempo_posse2);
+            prepState.setInt(26, chutes1);
+            prepState.setInt(27, chutes2);
+            prepState.setInt(28, chutes_gol1);
+            prepState.setInt(29, chutes_gol2);
+            prepState.setInt(30, faltas_cometidas1);
+            prepState.setInt(31, faltas_cometidas2);
+            prepState.setInt(32, faltas_sofridas1);
+            prepState.setInt(33, faltas_sofridas2);
+            prepState.setInt(34, escanteios1);
+            prepState.setInt(35, escanteios2);
+            prepState.setInt(36, tiros_diretos1);
+            prepState.setInt(37, tiros_diretos2);
+            prepState.setInt(38, tiros_indiretos1);
+            prepState.setInt(39, tiros_indiretos2);
+            prepState.setInt(40, penaltis_cobrados1);
+            prepState.setInt(41, penaltis_cobrados2);
+            prepState.setInt(42, penaltis_convertidos1);
+            prepState.setInt(43, penaltis_convertidos2);
+            prepState.setInt(44, impedimentos1);
+            prepState.setInt(45, impedimentos2);
+            prepState.setInt(46, gols_contra1);
+            prepState.setInt(47, gols_contra2);
+            prepState.setInt(48, advertencias1);
+            prepState.setInt(49, advertencias2);
+            prepState.setInt(50, expulsoes_indiretas1);
+            prepState.setInt(51, expulsoes_indiretas2);
+            prepState.setInt(52, expulsoes_diretas1);
+            prepState.setInt(53, expulsoes_diretas2);
+            prepState.setInt(54, tempo);
+            prepState.setInt(55, temperatura);
+            prepState.setInt(56, vento);
+            prepState.setInt(57, umidade);
+            prepState.setBoolean(58, prorrogacao);
+            prepState.setBoolean(59, disputa_penalti);
 
 
             prepState.executeUpdate();

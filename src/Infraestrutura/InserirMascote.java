@@ -25,7 +25,7 @@ public class InserirMascote {
         private static String nome;
         private static int copa;
         
-        public InserirMascote() {
+        public InserirMascote(String nome, int copa) {
 
 		try {
 

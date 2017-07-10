@@ -22,7 +22,7 @@ public class InserirBola {
     private static final String DB_PASSWORD = "password";
     private static String nome;
 
-    public InserirBola() {
+    public InserirBola( String nome) {
 
         try {
             insertRecordIntoTable(nome);

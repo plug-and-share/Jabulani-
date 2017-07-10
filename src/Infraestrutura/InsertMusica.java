@@ -21,7 +21,7 @@ public class InsertMusica {
 	private static final String DB_USER = "user";
 	private static final String DB_PASSWORD = "password";
         private static String nome, compositores, interpretes, duracao;
-	public InsertMusica(String[] argv) {
+	public InsertMusica(String nome) {
 
 		try {
 

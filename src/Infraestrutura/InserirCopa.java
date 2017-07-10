@@ -23,7 +23,7 @@ public class InserirCopa {
         private static int ano;
         private static String dataInicio, dataFim, musica, album, instrumento, trofeu;
         
-        public InserirCopa() {
+        public InserirCopa(int ano, String album, String instrumento) {
 
 		try {
 
