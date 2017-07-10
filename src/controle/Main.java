@@ -1,6 +1,7 @@
 package controle;
 
 import entidades.*;
+import Infraestrutura.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -24,8 +25,8 @@ public class Main
     public static SortedSet<String> premios=Collections.synchronizedSortedSet(new TreeSet());
     public static ArrayList<String> trofeus=new ArrayList();
     public static SortedSet<Character> posicoes=Collections.synchronizedSortedSet(new TreeSet());
-    public static final String PASTA="D:/Trabalhos escolares/2017/Banco de Dados/Copa do Mundo/Dados/";
-    public static boolean cache=true;
+    public static final String PASTA="/home/matheus/Pictures/DATA";
+    public static boolean cache=false;
 
     public static void listarCopas(String link) throws IOException, InterruptedException
     {
@@ -179,19 +180,19 @@ public class Main
         analisarSimbolos("/wiki/FIFA_World_Cup_mascot");
         analisarTrofeus("/wiki/FIFA_World_Cup_Trophy");
         analisarBolas("/wiki/Ball_(association_football)");
+
+
         for(Map.Entry<Short, Copa> copa: copas.entrySet())
         {
-            System.out.println(copa.getValue().ano);
-            System.out.println("");
-            System.out.println(copa.getValue().musica);
-            System.out.println(copa.getValue().album);
-            System.out.println(copa.getValue().instrumento);
-            System.out.println("\nMascotes:\n");
+            new InserirCopa(copa.getValue().ano,copa.getValue().album, copa.getValue().instrumento ); // Parametros estao bugados
+
+            new InsertMusica(copa.getValue().musica); // Parametros estao estranhos
+
             for(String mascote: copa.getValue().mascotes)
-                System.out.println(mascote);
-            System.out.println("\nBolas:\n");
+                new InserirMascote(mascote, copa.getValue().ano);
             for(String bola: copa.getValue().bolas)
-                System.out.println(bola);
+                new InserirBola(bola);
+
             System.out.println("\nSeleções:\n");
             for(Map.Entry<String, Selecao> selecao: copa.getValue().selecoes.entrySet())
             {
