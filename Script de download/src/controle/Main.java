@@ -25,7 +25,7 @@ public class Main
     public static ArrayList<String> trofeus=new ArrayList();
     public static SortedSet<Character> posicoes=Collections.synchronizedSortedSet(new TreeSet());
     public static final String PASTA="D:/Trabalhos escolares/2017/Banco de Dados/Copa do Mundo/Dados/";
-    public static boolean cache=true;
+    public static boolean cache=false;
 
     public static void listarCopas(String link) throws IOException, InterruptedException
     {
